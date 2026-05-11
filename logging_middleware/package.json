@@ -1,0 +1,7 @@
+{
+  "name": "@campus/logger",
+  "version": "1.0.0",
+  "description": "Shared logging middleware for campus notification platform — sends structured logs to the evaluation service",
+  "main": "src/index.js",
+  "license": "MIT"
+}
