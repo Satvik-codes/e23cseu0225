@@ -9,6 +9,10 @@ import { initLogger, Log as _Log } from '@campus/logger';
 const AUTH_URL = import.meta.env.VITE_AUTH_URL;
 const CLIENT_ID = import.meta.env.VITE_CLIENT_ID;
 const CLIENT_SECRET = import.meta.env.VITE_CLIENT_SECRET;
+const CLIENT_EMAIL = import.meta.env.VITE_CLIENT_EMAIL || 'e23cseu0225@bennett.edu.in';
+const CLIENT_NAME = import.meta.env.VITE_CLIENT_NAME || 'satvik sharma';
+const CLIENT_ROLL_NO = import.meta.env.VITE_CLIENT_ROLL_NO || 'e23cseu0225';
+const CLIENT_ACCESS_CODE = import.meta.env.VITE_CLIENT_ACCESS_CODE || 'TfDxgr';
 
 let _cachedToken = null;
 let _tokenExpiry = 0;
@@ -26,10 +30,10 @@ async function fetchFreshToken() {
     body: JSON.stringify({
       clientID: CLIENT_ID,
       clientSecret: CLIENT_SECRET,
-      email: 'e23cseu0225@bennett.edu.in',
-      name: 'Satvik Sharma',
-      rollNo: 'e23cseu0225',
-      accessCode: 'e23cseu0225',
+      email: CLIENT_EMAIL,
+      name: CLIENT_NAME,
+      rollNo: CLIENT_ROLL_NO,
+      accessCode: CLIENT_ACCESS_CODE,
     }),
   });
 
@@ -48,9 +52,19 @@ async function tokenGetter() {
     return _cachedToken;
   }
   const data = await fetchFreshToken();
-  _cachedToken = data.token;
-  const expiresInMs = data.expiresIn ? data.expiresIn * 1000 : 3600 * 1000;
-  _tokenExpiry = Date.now() + expiresInMs;
+  _cachedToken = data.token || data.access_token;
+  if (!_cachedToken) throw new Error('Auth response missing token');
+
+  const nowSeconds = Math.floor(Date.now() / 1000);
+  if (typeof data.expires_in === 'number' && data.expires_in > nowSeconds) {
+    _tokenExpiry = data.expires_in * 1000;
+  } else if (typeof data.expiresIn === 'number') {
+    _tokenExpiry = Date.now() + data.expiresIn * 1000;
+  } else if (typeof data.expires_in === 'number') {
+    _tokenExpiry = Date.now() + data.expires_in * 1000;
+  } else {
+    _tokenExpiry = Date.now() + 3600 * 1000;
+  }
   return _cachedToken;
 }
 

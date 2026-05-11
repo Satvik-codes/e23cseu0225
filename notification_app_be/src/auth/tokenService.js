@@ -23,7 +23,7 @@ const SAFETY_BUFFER_MS = 60 * 1000; // 60-second buffer before actual expiry
 // circular dependency during the very first fetch).
 // ---------------------------------------------------------------------------
 initLogger(async () => {
-  return await getToken();
+  return await getToken({ suppressLog: true });
 });
 
 /**
@@ -31,12 +31,15 @@ initLogger(async () => {
  * Uses the cache if the token is still fresh, otherwise fetches a new one.
  * @returns {Promise<string>}
  */
-async function getToken() {
+async function getToken(options = {}) {
+  const { suppressLog = false } = options;
   const now = Date.now();
 
   // Return cached token if it is still valid
   if (_cachedToken && now < _tokenExpiry - SAFETY_BUFFER_MS) {
-    await Log('backend', 'debug', 'auth', 'Returning cached token');
+    if (!suppressLog) {
+      await Log('backend', 'debug', 'auth', 'Returning cached token');
+    }
     return _cachedToken;
   }
 
@@ -55,19 +58,32 @@ async function getToken() {
       { timeout: 10000 }
     );
 
-    const { token, expiresIn } = response.data;
+    const { token, access_token: accessToken, expiresIn, expires_in: expiresInRaw } = response.data;
+    const resolvedToken = token || accessToken;
 
-    if (!token) throw new Error('Auth response did not contain a token');
+    if (!resolvedToken) throw new Error('Auth response did not contain a token');
 
-    _cachedToken = token;
-    // expiresIn is expected in seconds; fall back to 1 hour if not provided
-    const expiresInMs = expiresIn ? expiresIn * 1000 : 60 * 60 * 1000;
-    _tokenExpiry = Date.now() + expiresInMs;
+    _cachedToken = resolvedToken;
+    // Supports both relative expiresIn(seconds) and absolute expires_in(epoch seconds).
+    const nowSeconds = Math.floor(Date.now() / 1000);
+    if (typeof expiresInRaw === 'number' && expiresInRaw > nowSeconds) {
+      _tokenExpiry = expiresInRaw * 1000;
+    } else if (typeof expiresIn === 'number') {
+      _tokenExpiry = Date.now() + expiresIn * 1000;
+    } else if (typeof expiresInRaw === 'number') {
+      _tokenExpiry = Date.now() + expiresInRaw * 1000;
+    } else {
+      _tokenExpiry = Date.now() + 60 * 60 * 1000;
+    }
 
-    await Log('backend', 'info', 'auth', 'New token fetched and cached successfully');
+    if (!suppressLog) {
+      await Log('backend', 'info', 'auth', 'New token fetched and cached successfully');
+    }
     return _cachedToken;
   } catch (err) {
-    await Log('backend', 'error', 'auth', `Failed to fetch auth token: ${err.message}`);
+    if (!suppressLog) {
+      await Log('backend', 'error', 'auth', `Failed to fetch auth token: ${err.message}`);
+    }
     throw new Error(`[tokenService] Authentication failed: ${err.message}`);
   }
 }

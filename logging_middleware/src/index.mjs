@@ -1,5 +1,3 @@
-'use strict';
-
 const VALID_STACKS = new Set(['backend', 'frontend']);
 const VALID_LEVELS = new Set(['debug', 'info', 'warn', 'error', 'fatal']);
 const VALID_PACKAGES = new Set([
@@ -8,23 +6,23 @@ const VALID_PACKAGES = new Set([
   'auth', 'config', 'middleware', 'utils',
 ]);
 
-let _tokenGetter = null;
+let tokenGetterRef = null;
 
-function initLogger(tokenGetter) {
+export function initLogger(tokenGetter) {
   if (typeof tokenGetter !== 'function') {
     throw new Error('[campus/logger] initLogger requires an async function');
   }
-  _tokenGetter = tokenGetter;
+  tokenGetterRef = tokenGetter;
 }
 
-async function Log(stack, level, packageName, message) {
+export async function Log(stack, level, packageName, message) {
   try {
     if (!VALID_STACKS.has(stack) || !VALID_LEVELS.has(level) || !VALID_PACKAGES.has(packageName)) return;
-    if (!_tokenGetter) return;
+    if (!tokenGetterRef) return;
 
     let token;
     try {
-      token = await _tokenGetter();
+      token = await tokenGetterRef();
     } catch (_) {
       return;
     }
@@ -55,4 +53,4 @@ async function Log(stack, level, packageName, message) {
   }
 }
 
-module.exports = { initLogger, Log };
+export default { initLogger, Log };

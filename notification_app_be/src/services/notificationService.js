@@ -29,16 +29,26 @@ function setEmitter(emitFn) {
 async function fetchNotifications(params = {}) {
   try {
     const token = await getToken();
-
-    const response = await axios.get(config.notificationsUrl, {
+    const requestConfig = {
       headers: { Authorization: `Bearer ${token}` },
       params,
       timeout: 10000,
-    });
+    };
+    const response = await axios.get(config.notificationsUrl, requestConfig);
 
     await Log('backend', 'info', 'service', `fetchNotifications succeeded — returned ${response.data?.notifications?.length ?? 0} notifications`);
     return response.data;
   } catch (err) {
+    if (err.response && err.response.status === 400 && !params.notification_type) {
+      await Log('backend', 'warn', 'service', 'Upstream rejected pagination-only query; retrying without query params');
+      const token = await getToken();
+      const fallbackResponse = await axios.get(config.notificationsUrl, {
+        headers: { Authorization: `Bearer ${token}` },
+        timeout: 10000,
+      });
+      return fallbackResponse.data;
+    }
+
     // Handle token expiry mid-request — retry once with a fresh token
     if (err.response && err.response.status === 401) {
       await Log('backend', 'warn', 'auth', 'Token rejected (401) — refreshing and retrying request');
@@ -73,7 +83,6 @@ async function fetchAllNotificationsForPriority() {
 
     const response = await axios.get(config.notificationsUrl, {
       headers: { Authorization: `Bearer ${token}` },
-      params: { limit: 100, page: 1 },
       timeout: 10000,
     });
 

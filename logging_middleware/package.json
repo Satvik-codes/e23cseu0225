@@ -1,7 +1,12 @@
 {
   "name": "@campus/logger",
   "version": "1.0.0",
-  "description": "Shared logging middleware for campus notification platform — sends structured logs to the evaluation service",
+  "description": "Shared logging middleware for campus notification platform - sends structured logs to the evaluation service",
   "main": "src/index.js",
+  "module": "src/index.mjs",
+  "exports": {
+    "import": "./src/index.mjs",
+    "require": "./src/index.js"
+  },
   "license": "MIT"
 }

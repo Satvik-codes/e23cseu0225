@@ -89,19 +89,18 @@ app.use(async (err, req, res, _next) => {
 // Start server
 // ---------------------------------------------------------------------------
 async function start() {
-  // Warm up the token cache before accepting requests
-  try {
-    await getToken();
-  } catch (err) {
-    await Log('backend', 'error', 'config', `Startup token fetch failed — server will retry on first request: ${err.message}`);
-  }
+  // Listen immediately so the port is bound before any async auth calls
+  httpServer.listen(config.port, () => {
+    Log('backend', 'info', 'config', `Server started on port ${config.port}`);
+  });
 
-  httpServer.listen(config.port, async () => {
-    await Log('backend', 'info', 'config', `Server started on port ${config.port}`);
+  // Warm up the token cache in the background — errors are non-fatal
+  getToken().catch((err) => {
+    Log('backend', 'error', 'config', `Startup token warm-up failed — will retry on first request: ${err.message}`);
   });
 }
 
-start().catch(async (err) => {
-  await Log('backend', 'fatal', 'config', `Failed to start server: ${err.message}`);
+start().catch((err) => {
+  Log('backend', 'fatal', 'config', `Failed to start server: ${err.message}`);
   process.exit(1);
 });
