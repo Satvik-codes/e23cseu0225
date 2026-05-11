@@ -41,7 +41,7 @@ function timeAgo(timestamp) {
  * @param {{ notification: object, rank?: number, isNew?: boolean }} props
  */
 export default function NotificationCard({ notification, rank, isNew }) {
-  const id = notification.id || notification._id;
+  const id = notification.id || notification._id || notification.ID;
   const [seen, setSeen] = useState(() => isSeen(id));
 
   function handleClick() {
@@ -52,9 +52,9 @@ export default function NotificationCard({ notification, rank, isNew }) {
     }
   }
 
-  const type = notification.type || notification.notification_type || 'Event';
+  const type = notification.type || notification.notification_type || notification.Type || 'Event';
   const chipColor = TYPE_COLORS[type] || 'default';
-  const ts = notification.timestamp || notification.created_at;
+  const ts = notification.timestamp || notification.created_at || notification.Timestamp;
 
   return (
     <Card
@@ -107,10 +107,10 @@ export default function NotificationCard({ notification, rank, isNew }) {
             {timeAgo(ts)}
           </Typography>
 
-          {notification.finalScore !== undefined && (
-            <Typography variant="caption" color="text.disabled" sx={{ display: 'block' }}>
-              Priority score: {notification.finalScore.toFixed(3)}
-            </Typography>
+            {notification.finalScore !== undefined && (
+              <Typography variant="caption" color="text.disabled" sx={{ display: 'block' }}>
+                Priority score: {notification.finalScore.toFixed(3)}
+              </Typography>
           )}
         </CardContent>
       </CardActionArea>

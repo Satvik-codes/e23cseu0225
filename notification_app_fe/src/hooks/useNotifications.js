@@ -69,9 +69,10 @@ export function useNotifications({ page = 1, limit = 10, notificationType = '' }
     });
 
     socket.on('new_notification', (notification) => {
-      Log('info', 'hook', `New real-time notification received: ${notification?.id}`);
+      const notifId = notification?.id || notification?._id || notification?.ID;
+      Log('info', 'hook', `New real-time notification received: ${notifId}`);
       setNotifications((prev) => [notification, ...prev]);
-      setNewIds((prev) => new Set([...prev, notification?.id]));
+      setNewIds((prev) => new Set([...prev, notifId]));
     });
 
     socket.on('reconnect_attempt', (attempt) => {

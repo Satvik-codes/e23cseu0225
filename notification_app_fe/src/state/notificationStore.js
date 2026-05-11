@@ -62,5 +62,5 @@ export function isSeen(id) {
  * @returns {number}
  */
 export function countUnseen(notifications) {
-  return notifications.filter((n) => !isSeen(n.id || n._id)).length;
+  return notifications.filter((n) => !isSeen(n.id || n._id || n.ID)).length;
 }

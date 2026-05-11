@@ -117,13 +117,16 @@ export default function AllNotificationsPage() {
           </Typography>
         </Box>
       ) : (
-        notifications.map((notification) => (
-          <NotificationCard
-            key={notification.id || notification._id}
-            notification={notification}
-            isNew={newIds.has(notification.id || notification._id)}
-          />
-        ))
+        notifications.map((notification, idx) => {
+          const notifId = notification.id || notification._id || notification.ID || `notif-${idx}`;
+          return (
+            <NotificationCard
+              key={notifId}
+              notification={notification}
+              isNew={newIds.has(notifId)}
+            />
+          );
+        })
       )}
 
       {/* Pagination */}

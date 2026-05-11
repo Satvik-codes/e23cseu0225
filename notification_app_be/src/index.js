@@ -27,7 +27,7 @@ const { setEmitter } = require('./services/notificationService');
 const app = express();
 
 app.use(cors({
-  origin: 'http://localhost:3000',
+  origin: ['http://localhost:3000', 'http://localhost:3001'],
   methods: ['GET', 'POST'],
   allowedHeaders: ['Authorization', 'Content-Type'],
 }));
@@ -42,7 +42,7 @@ const httpServer = http.createServer(app);
 
 const io = new Server(httpServer, {
   cors: {
-    origin: 'http://localhost:3000',
+    origin: ['http://localhost:3000', 'http://localhost:3001'],
     methods: ['GET', 'POST'],
     allowedHeaders: ['Authorization'],
   },
